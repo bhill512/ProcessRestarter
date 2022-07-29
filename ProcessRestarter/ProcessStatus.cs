@@ -21,6 +21,7 @@ namespace ProcessRestarter
 
         public void StartProcessIfNotRunning(string processName, string processLoc)
         {
+            Log.Logger.Information($"Checking the status of {processName}");
             if (System.Diagnostics.Process.GetProcessesByName($"{processName}").Length == 0)
             {
                 Log.Logger.Information($"{processName} is not running\n Starting {processName} at location {processLoc}");
