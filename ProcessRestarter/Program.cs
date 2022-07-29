@@ -7,13 +7,12 @@ namespace ProcessRestarter
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .WriteTo
-                .File(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                    "Process_Restarter_Logs.txt"))
+                .Console()
                 .CreateLogger();
 
             IConfigurationBuilder configBuilder = new ConfigurationBuilder()
@@ -36,6 +35,7 @@ namespace ProcessRestarter
 
             var processStatus = new ProcessStatus(Log.Logger, config);
 
+            Log.Logger.Information("ProcessRestarter is Running");
             while (true)
             {
                 foreach (var p in processesOptions)
