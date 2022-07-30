@@ -6,7 +6,7 @@ but it was fun
 I have a release up that you can grab. Go to the [releases page](https://github.com/bhill512/ProcessRestarter/releases) and download the latest
 - ensure you have the dotnet runtime installed
 - unzip the contents to your desired directory
-- open the ```appsettings.json``` file and in the ```"Processes"``` section add an object for the process you want to monitor
+- open the ```appsettings.json``` file and in the ```"Processes"``` section add an object for the process you want to monitor\
 for example:
 ```
     "Processes": [
