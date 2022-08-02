@@ -2,13 +2,21 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 
 namespace ProcessRestarter
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
+            var services = new ServiceCollection().AddHttpClient();
+            var builder = new ContainerBuilder();
+            builder.Populate(services);
+            var container = builder.Build();
+            var factory = container.Resolve<IHttpClientFactory>();
+
             Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .WriteTo
@@ -28,16 +36,19 @@ namespace ProcessRestarter
             IConfiguration config = configBuilder.Build();
 
             var processes = config.GetSection("Processes");
-            var processesOptions = processes.Get<List<Processes>>();
-
 
             var waitTimeBetweenChecksInMinutes = config.GetValue<int>("TimeBetweenChecksInMinutes");
 
+            var client = new Client(Log.Logger, factory);
             var processStatus = new ProcessStatus(Log.Logger, config);
 
             Log.Logger.Information("ProcessRestarter is Running");
             while (true)
             {
+                var plexlibraries = await client.GetPlexLibraries($"{config["Plex:ServerUrl"]}", $"{config["Plex:XPlexToken"]}").ConfigureAwait(false);
+                Log.Logger.Information($"Here's some Title Library Info: {plexlibraries.MediaContainer.Directory[0].Title}");
+
+                var processesOptions = processes.Get<List<Processes>>();
                 foreach (var p in processesOptions)
                 {
                     processStatus.StartProcessIfNotRunning(p.Name, p.Location);
