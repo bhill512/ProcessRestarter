@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using Polly;
 using Polly.Retry;
+using Polly.Timeout;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -21,42 +22,45 @@ namespace ProcessRestarter
         ILogger _logger;
         IHttpClientFactory _clientFactory;
         AsyncRetryPolicy _retryPolicy;
+        AsyncTimeoutPolicy _timeoutPolicy;
         private readonly int maxRetries = 3;
 
         public Client(ILogger logger, IHttpClientFactory clientFactory)
         {
             _logger = logger;
             _clientFactory = clientFactory;
-            _retryPolicy = Policy.Handle<HttpRequestException>().WaitAndRetryAsync(maxRetries, times =>
+            _retryPolicy = Policy.Handle<HttpRequestException>().Or<TimeoutRejectedException>().WaitAndRetryAsync(maxRetries, times =>
                 TimeSpan.FromMilliseconds(times * 100));
+            _timeoutPolicy = Policy.TimeoutAsync(1);
         }
 
-        [return: MaybeNull]
         public async Task<PlexLibraries> GetPlexLibraries(string plexUrl, string xPlexToken)
         {
             var client = _clientFactory.CreateClient();
-            return await _retryPolicy.ExecuteAsync(async () =>
+            var uri = new Uri($"{plexUrl}/library/sections/?X-Plex-Token={xPlexToken}");
+#pragma warning disable CS8603 // Possible null reference return.
+            var response = await _retryPolicy.ExecuteAsync(async () =>
+                await _timeoutPolicy.ExecuteAsync(async () =>
+                    await client.GetAsync(uri))
+            );
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound || response == null)
             {
-                var uri = new Uri($"{plexUrl}/library/sections/?X-Plex-Token={xPlexToken}");
-                var response = await client.GetAsync(uri);
+                _logger.Information($"{plexUrl} is unresponsive after {maxRetries} tries");
+                var plexLibraries = new PlexLibraries();
+                plexLibraries.Error = "got no response";
+                return plexLibraries;
+            }
 
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                {
-                    _logger.Information($"{plexUrl} is unresponsive after {maxRetries} tries");
-                    var plexLibraries = new PlexLibraries();
-                    plexLibraries.MediaContainer.Title1 = "";
-                    return plexLibraries;
-                }
+            var responseString = await response.Content.ReadAsStringAsync();
 
-                var responseString = await response.Content.ReadAsStringAsync();
+            XmlDocument doc = new XmlDocument();
+            doc.LoadXml(responseString);
 
-                XmlDocument doc = new XmlDocument();
-                doc.LoadXml(responseString);
+            var json = JsonConvert.SerializeXmlNode(doc);
 
-                var json = JsonConvert.SerializeXmlNode(doc);
-
-                return JsonConvert.DeserializeObject<PlexLibraries>(json);
-            });
+            return JsonConvert.DeserializeObject<PlexLibraries>(json);
+#pragma warning restore CS8603 // Possible null reference return.
         }
     }
 }

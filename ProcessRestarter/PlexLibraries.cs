@@ -22,6 +22,9 @@ namespace ProcessRestarter
 
         [JsonProperty("MediaContainer")]
         public MediaContainer MediaContainer { get; set; }
+
+        [JsonProperty("error", NullValueHandling = NullValueHandling.Ignore)]
+        public string Error { get; set; }
     }
 
     public partial class MediaContainer
