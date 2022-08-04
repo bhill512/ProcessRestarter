@@ -45,6 +45,7 @@ namespace ProcessRestarter
                     _logger.Information($"{processLoc} does not exist. Exiting");
                 }
             }
+            _logger.Information($"{processName} is running");
         }
 
         public void KillProcess(string processName, int retries)

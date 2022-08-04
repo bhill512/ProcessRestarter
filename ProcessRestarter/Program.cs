@@ -47,7 +47,7 @@ namespace ProcessRestarter
                 var waitTimeBetweenChecksInMinutes = config.GetValue<int>("TimeBetweenChecksInMinutes");
 
                 var processesOptions = processes.Get<List<Processes>>();
-
+                //TODO clean up logic from program.cs and put in their own respective methods
                 foreach (var p in processesOptions)
                 {
                     processStatus.StartProcessIfNotRunning(p.Name, p.Location);

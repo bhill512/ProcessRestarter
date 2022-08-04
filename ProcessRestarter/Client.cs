@@ -36,6 +36,7 @@ namespace ProcessRestarter
 
         public async Task<PlexLibraries> GetPlexLibraries(string plexUrl, string xPlexToken)
         {
+            _logger.Information($"Making an API call to {plexUrl}");
             var client = _clientFactory.CreateClient();
             var uri = new Uri($"{plexUrl}/library/sections/?X-Plex-Token={xPlexToken}");
 #pragma warning disable CS8603 // Possible null reference return.
@@ -46,7 +47,7 @@ namespace ProcessRestarter
 
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound || response == null)
             {
-                _logger.Information($"{plexUrl} is unresponsive after {maxRetries} tries");
+                _logger.Error($"{plexUrl} is unresponsive after {maxRetries} tries");
                 var plexLibraries = new PlexLibraries();
                 plexLibraries.Error = "got no response";
                 return plexLibraries;
