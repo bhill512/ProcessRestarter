@@ -61,7 +61,7 @@ namespace ProcessRestarter
                 }
                 else
                 {
-                    //reursion :-O
+                    //recursion :-O
                     _logger.Information($"Gonna try to kill it again. Attempt number {retries}");
                     process.Refresh();
                     KillProcess(processName, retries--);
