@@ -55,7 +55,7 @@ namespace ProcessRestarter
                     {
                         var plexlibraries = await client.GetPlexLibraries($"{config["Plex:ServerUrl"]}", $"{config["Plex:XPlexToken"]}").ConfigureAwait(false);
 
-                        if (plexlibraries.Error != null || String.IsNullOrEmpty(plexlibraries.MediaContainer.Directory[0].Title))
+                        if (plexlibraries == null || String.IsNullOrEmpty(plexlibraries?.MediaContainer.Directory[0].Title))
                         {
                             processStatus.KillProcess(p.Name, 3);
 

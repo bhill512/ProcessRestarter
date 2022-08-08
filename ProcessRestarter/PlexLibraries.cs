@@ -17,10 +17,10 @@ namespace ProcessRestarter
 
     public partial class PlexLibraries
     {
-        [JsonProperty("?xml")]
+        [JsonProperty("?xml", NullValueHandling = NullValueHandling.Ignore)]
         public Xml Xml { get; set; }
 
-        [JsonProperty("MediaContainer")]
+        [JsonProperty("MediaContainer", NullValueHandling = NullValueHandling.Ignore)]
         public MediaContainer MediaContainer { get; set; }
 
         [JsonProperty("error", NullValueHandling = NullValueHandling.Ignore)]

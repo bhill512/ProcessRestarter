@@ -39,29 +39,35 @@ namespace ProcessRestarter
             _logger.Information($"Making an API call to {plexUrl}");
             var client = _clientFactory.CreateClient();
             var uri = new Uri($"{plexUrl}/library/sections/?X-Plex-Token={xPlexToken}");
-#pragma warning disable CS8603 // Possible null reference return.
+
             var response = await _retryPolicy.ExecuteAsync(async () =>
                 await _timeoutPolicy.ExecuteAsync(async () =>
                     await client.GetAsync(uri))
             );
-
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound || response == null)
+            try
             {
-                _logger.Error($"{plexUrl} is unresponsive after {maxRetries} tries");
-                var plexLibraries = new PlexLibraries();
-                plexLibraries.Error = "got no response";
-                return plexLibraries;
+                response.EnsureSuccessStatusCode();
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                XmlDocument doc = new XmlDocument();
+                doc.LoadXml(responseString);
+
+                var json = JsonConvert.SerializeXmlNode(doc);
+
+                var values = JsonConvert.DeserializeObject<PlexLibraries>(json);
+                return values;
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.Error($"Request timed out");
+                return null;
+            }
+            catch (Exception e)
+            {
+                _logger.Error($"Request is wonky: {e.Message}");
+                return null;
             }
 
-            var responseString = await response.Content.ReadAsStringAsync();
-
-            XmlDocument doc = new XmlDocument();
-            doc.LoadXml(responseString);
-
-            var json = JsonConvert.SerializeXmlNode(doc);
-
-            return JsonConvert.DeserializeObject<PlexLibraries>(json);
-#pragma warning restore CS8603 // Possible null reference return.
         }
     }
 }
