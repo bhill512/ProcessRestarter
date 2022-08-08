@@ -41,28 +41,12 @@ namespace ProcessRestarter
                 IConfiguration config = configBuilder.Build();
 
                 var client = new Client(Log.Logger, factory);
-                var processStatus = new ProcessStatus(Log.Logger, config);
+                var processStatus = new ProcessStatus(Log.Logger, config, client);
 
                 var processes = config.GetSection("Processes");
                 var waitTimeBetweenChecksInMinutes = config.GetValue<int>("TimeBetweenChecksInMinutes");
-
                 var processesOptions = processes.Get<List<Processes>>();
-                //TODO clean up logic from program.cs and put in their own respective methods
-                foreach (var p in processesOptions)
-                {
-                    processStatus.StartProcessIfNotRunning(p.Name, p.Location);
-                    if (p.Name == "Plex Media Server" && File.Exists($"{p.Location}"))
-                    {
-                        var plexlibraries = await client.GetPlexLibraries($"{config["Plex:ServerUrl"]}", $"{config["Plex:XPlexToken"]}").ConfigureAwait(false);
-
-                        if (plexlibraries == null || String.IsNullOrEmpty(plexlibraries?.MediaContainer.Directory[0].Title))
-                        {
-                            processStatus.KillProcess(p.Name, 3);
-
-                            processStatus.StartProcessIfNotRunning(p.Name, p.Location);
-                        }
-                    }
-                }
+                processStatus?.AnalyzeProcesses(processesOptions);
 
                 Log.Logger.Information($"Sleeping for {waitTimeBetweenChecksInMinutes} minutes");
                 Thread.Sleep(waitTimeBetweenChecksInMinutes * 60000); //minutes to milliseconds
