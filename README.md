@@ -33,4 +33,5 @@ for example:
 - run ```ProcessRestarter.exe```
 - watch it work
 
-
+### Note
+- Please shut down the process restarter when you go to update any process that you're monitoring with it. It will try to start the process during an update and the update will fail
