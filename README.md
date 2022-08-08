@@ -34,4 +34,4 @@ for example:
 - watch it work
 
 ### Note
-- Please shut down the process restarter when you go to update any process that you're monitoring with it. It will try to start the process during an update and the update will fail
+- Please shut down the ProcessRestarter when you go to update any process that you're monitoring with it. It will try to start the process during an update and the update will fail. Once the update is complete then resume ProcessRestarter
